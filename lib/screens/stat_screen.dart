@@ -46,7 +46,7 @@ class StatsScreen extends StatelessWidget {
                 child: const ListTile(
                   leading: Icon(Icons.star, color: Colors.amber),
                   title: Text('Current Streak'),
-                  trailing: Text('5 Days', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  trailing: Text('12 Days', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 30),
