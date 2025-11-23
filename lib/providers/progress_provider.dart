@@ -4,7 +4,7 @@ import '../models/lesson.dart';
 import '../models/quiz_question.dart';
 import '../services/storage_service.dart';
 import '../services/hybrid_storage_service.dart';
-import '../services/api_service.dart';
+// import '../services/api_service.dart';
 
 class ProgressProvider extends ChangeNotifier {
   UserProgress _userProgress = UserProgress();
@@ -339,6 +339,37 @@ class ProgressProvider extends ChangeNotifier {
   // Get lesson progress
   LessonProgress? getLessonProgress(String lessonId) {
     return _userProgress.getLessonProgress(lessonId);
+  }
+
+  // Start a new lesson session (resets the current session progress)
+  Future<void> startLessonSession(String lessonId) async {
+    try {
+      final lesson = getLessonById(lessonId);
+      if (lesson == null) return;
+
+      // Create a fresh lesson progress for this session
+      final sessionProgress = LessonProgress(
+        lessonId: lessonId,
+        totalQuestions: lesson.totalQuestions,
+        questionsCompleted: 0,
+        correctAnswers: 0,
+        incorrectAnswerIds: [],
+        isCompleted: false,
+        attemptCount: _userProgress.getLessonProgress(lessonId)?.attemptCount ?? 0,
+      );
+
+      final updatedLessonProgress = Map<String, LessonProgress>.from(_userProgress.lessonProgress);
+      updatedLessonProgress[lessonId] = sessionProgress;
+
+      _userProgress = _userProgress.copyWith(
+        lessonProgress: updatedLessonProgress,
+      );
+
+      await _saveProgress();
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to start lesson session: $e');
+    }
   }
 
   // Reset progress for a lesson

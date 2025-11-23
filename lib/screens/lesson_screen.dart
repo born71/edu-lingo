@@ -26,17 +26,22 @@ class _LessonScreenState extends State<LessonScreen> {
     
     if (_isLoading) {
       final lessonId = ModalRoute.of(context)?.settings.arguments as String?;
+      final progressProvider = Provider.of<ProgressProvider>(context, listen: false);
       
       if (lessonId != null) {
-        final progressProvider = Provider.of<ProgressProvider>(context, listen: false);
         _currentLesson = progressProvider.getLessonById(lessonId);
+        // Start a new lesson session to reset progress counters
+        if (_currentLesson != null) {
+          progressProvider.startLessonSession(lessonId);
+        }
       }
       
       // If no lesson ID provided, use the first available lesson
       if (_currentLesson == null) {
-        final progressProvider = Provider.of<ProgressProvider>(context, listen: false);
         if (progressProvider.lessons.isNotEmpty) {
           _currentLesson = progressProvider.lessons.first;
+          // Start a new lesson session for the first lesson
+          progressProvider.startLessonSession(_currentLesson!.id);
         }
       }
       
@@ -47,8 +52,11 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   QuizQuestion get currentQuestion {
-    if (_currentLesson == null || _currentLesson!.questions.isEmpty) {
-      // Return a default question if no lesson is loaded
+    if (_currentLesson == null || 
+        _currentLesson!.questions.isEmpty || 
+        _currentQuestionIndex >= _currentLesson!.questions.length ||
+        _currentQuestionIndex < 0) {
+      // Return a default question if no lesson is loaded or index is out of bounds
       return QuizQuestion(
         id: 'default',
         question: 'No questions available',
@@ -105,6 +113,12 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   void _nextQuestion() {
+    // Check if this is the last question before incrementing
+    if (_currentQuestionIndex >= _currentLesson!.questions.length - 1) {
+      _completeLesson();
+      return;
+    }
+
     setState(() {
       _isAnswerChecked = false;
       _selectedAnswer = null;
@@ -112,10 +126,6 @@ class _LessonScreenState extends State<LessonScreen> {
       _feedbackColor = Colors.transparent;
       _currentQuestionIndex++;
     });
-
-    if (_currentQuestionIndex >= _currentLesson!.questions.length) {
-      _completeLesson();
-    }
   }
 
   void _completeLesson() {
