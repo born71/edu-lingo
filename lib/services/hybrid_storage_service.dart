@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_progress.dart';
 import '../models/lesson.dart';
 import '../data/lesson_data.dart';
-import 'api_service.dart';
+import 'lessons_api_service.dart';
 
 class HybridStorageService {
   static const String _userProgressKey = 'user_progress';
@@ -41,7 +41,7 @@ class HybridStorageService {
   // ===== HYBRID LESSON MANAGEMENT =====
   
   /// Fetch lessons with fallback strategy:
-  /// 1. Try to fetch from API
+  /// 1. Try to fetch from Lessons microservice
   /// 2. If offline, use cached lessons
   /// 3. If no cache, use default lessons
   static Future<List<Lesson>> fetchLessons({
@@ -50,9 +50,9 @@ class HybridStorageService {
     bool forceRefresh = false,
   }) async {
     try {
-      // Check if we should try API first
-      if (await ApiService.isServerReachable() || forceRefresh) {
-        final apiLessons = await ApiService.fetchLessons(
+      // Check if we should try Lessons API first
+      if (await LessonsApiService.isServiceReachable() || forceRefresh) {
+        final apiLessons = await LessonsApiService.fetchLessons(
           language: language,
           difficulty: difficulty,
         );
@@ -64,7 +64,7 @@ class HybridStorageService {
         return apiLessons;
       }
     } catch (e) {
-      print('API fetch failed, falling back to cache: $e');
+      print('Lessons API fetch failed, falling back to cache: $e');
     }
     
     // Fallback to cached lessons
@@ -113,20 +113,14 @@ class HybridStorageService {
       final jsonString = jsonEncode(progress.toJson());
       await prefs.setString(_userProgressKey, jsonString);
       
-      // Try to sync to server if online
+      // TODO: Sync to User Progress microservice when ready
+      // For now, just save locally and queue for future sync
       final userId = await getUserId();
-      if (userId != null && await ApiService.isServerReachable()) {
-        final synced = await ApiService.syncUserProgress(userId, progress);
-        if (synced) {
-          await _updateLastSync();
-          await _clearOfflineQueue(); // Clear any pending offline actions
-        }
-        return synced;
-      } else {
-        // Queue for later sync if offline
+      if (userId != null) {
+        // Queue for later sync when user progress service is available
         await _queueOfflineAction('sync_progress', progress.toJson());
-        return true; // Local save successful
       }
+      return true; // Local save successful
     } catch (e) {
       print('Error saving user progress: $e');
       return false;
@@ -138,19 +132,10 @@ class HybridStorageService {
     try {
       final userId = await getUserId();
       
-      // Try to fetch from server first if online
-      if (userId != null && await ApiService.isServerReachable()) {
-        try {
-          final serverProgress = await ApiService.fetchUserProgress(userId);
-          if (serverProgress != null) {
-            // Update local cache with server data
-            await _saveProgressLocally(serverProgress);
-            await _updateLastSync();
-            return serverProgress;
-          }
-        } catch (e) {
-          print('Server fetch failed, using local cache: $e');
-        }
+      // TODO: Fetch from User Progress microservice when ready
+      // For now, just use local cache
+      if (userId != null) {
+        print('User Progress service not yet implemented, using local cache');
       }
       
       // Fallback to local cache
@@ -216,55 +201,19 @@ class HybridStorageService {
   /// Process queued offline actions when connection is restored
   static Future<void> syncOfflineQueue() async {
     try {
-      if (!await ApiService.isServerReachable()) return;
+      // TODO: Implement when microservices are ready
+      print('Offline sync queue processing - waiting for microservices implementation');
       
+      // For now, just log what would be synced
       final prefs = await _preferences;
       final queueJson = prefs.getString(_offlineQueueKey);
-      if (queueJson == null) return;
-      
-      final List<dynamic> queue = jsonDecode(queueJson);
-      final userId = await getUserId();
-      
-      if (userId == null) return;
-      
-      bool allSynced = true;
-      
-      for (final item in queue) {
-        try {
-          final action = item['action'];
-          final data = item['data'];
-          
-          switch (action) {
-            case 'sync_progress':
-              final progress = UserProgress.fromJson(data);
-              final synced = await ApiService.syncUserProgress(userId, progress);
-              if (!synced) allSynced = false;
-              break;
-            case 'record_answer':
-              final synced = await ApiService.recordAnswer(
-                userId: userId,
-                lessonId: data['lessonId'],
-                questionId: data['questionId'],
-                selectedAnswer: data['selectedAnswer'],
-                isCorrect: data['isCorrect'],
-                timestamp: DateTime.parse(data['timestamp']),
-              );
-              if (!synced) allSynced = false;
-              break;
-          }
-        } catch (e) {
-          print('Error syncing offline item: $e');
-          allSynced = false;
-        }
-      }
-      
-      if (allSynced) {
-        await _clearOfflineQueue();
-        await _updateLastSync();
+      if (queueJson != null) {
+        final List<dynamic> queue = jsonDecode(queueJson);
+        print('${queue.length} items queued for sync when services are ready');
       }
       
     } catch (e) {
-      print('Error syncing offline queue: $e');
+      print('Error checking offline queue: $e');
     }
   }
 
@@ -288,24 +237,13 @@ class HybridStorageService {
   /// Force sync all data with server
   static Future<bool> forceSyncAll() async {
     try {
-      if (!await ApiService.isServerReachable()) return false;
+      // TODO: Implement when User Progress microservice is ready
+      print('Force sync - waiting for User Progress microservice implementation');
       
-      // Sync offline queue first
+      // For now, just sync offline queue (log only)
       await syncOfflineQueue();
       
-      // Then sync current progress
-      final progress = await _loadProgressLocally();
-      final userId = await getUserId();
-      
-      if (progress != null && userId != null) {
-        final synced = await ApiService.syncUserProgress(userId, progress);
-        if (synced) {
-          await _updateLastSync();
-        }
-        return synced;
-      }
-      
-      return true;
+      return true; // Return success for local operations
     } catch (e) {
       print('Error in force sync: $e');
       return false;
@@ -325,18 +263,9 @@ class HybridStorageService {
       final userId = await getUserId();
       final timestamp = DateTime.now();
       
-      if (userId != null && await ApiService.isServerReachable()) {
-        // Try to record directly to server
-        return await ApiService.recordAnswer(
-          userId: userId,
-          lessonId: lessonId,
-          questionId: questionId,
-          selectedAnswer: selectedAnswer,
-          isCorrect: isCorrect,
-          timestamp: timestamp,
-        );
-      } else {
-        // Queue for offline sync
+      // TODO: Send to User Progress microservice when ready
+      // For now, just queue for future sync
+      if (userId != null) {
         await _queueOfflineAction('record_answer', {
           'lessonId': lessonId,
           'questionId': questionId,
@@ -344,8 +273,8 @@ class HybridStorageService {
           'isCorrect': isCorrect,
           'timestamp': timestamp.toIso8601String(),
         });
-        return true;
       }
+      return true; // Always return success for local storage
     } catch (e) {
       print('Error recording answer: $e');
       return false;

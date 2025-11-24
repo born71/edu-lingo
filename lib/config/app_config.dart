@@ -1,13 +1,22 @@
-/// Configuration for your database/API server
+/// Configuration for microservices architecture
 class AppConfig {
-  // ===== API CONFIGURATION =====
+  // ===== MICROSERVICES CONFIGURATION =====
   
-  /// Your server base URL
-  /// Replace this with your actual server URL
-  static const String apiBaseUrl = 'https://your-server.com/api';
+  /// Lessons Service (Spring Boot - Port 8081)
+  static const String lessonsServiceUrl = 'http://localhost:8081/api';
+  
+  /// Future services (to be implemented)
+  static const String userProgressServiceUrl = 'http://localhost:8082/api';
+  static const String authServiceUrl = 'http://localhost:8083/api';
+  static const String analyticsServiceUrl = 'http://localhost:8084/api';
+  
+  /// Production URLs (update when deploying)
+  static const String prodLessonsServiceUrl = 'https://your-domain.com/lessons/api';
+  static const String prodUserProgressServiceUrl = 'https://your-domain.com/progress/api';
+  static const String prodAuthServiceUrl = 'https://your-domain.com/auth/api';
+  static const String prodAnalyticsServiceUrl = 'https://your-domain.com/analytics/api';
   
   /// API authentication key (if needed)
-  /// You might get this from your server admin panel
   static const String apiKey = 'your-api-key-here';
   
   /// Request timeout duration
@@ -23,39 +32,49 @@ class AppConfig {
   static const String answersTable = 'user_answers';
   static const String achievementsTable = 'achievements';
   
-  // ===== API ENDPOINTS =====
-  /// Define your API endpoints here
+  // ===== MICROSERVICE ENDPOINTS =====
   
-  static const Map<String, String> endpoints = {
-    // Authentication
+  /// Lessons Service Endpoints
+  static const Map<String, String> lessonsEndpoints = {
+    'lessons': '/lessons',
+    'lessonById': '/lessons/{id}',
+    'lessonQuestions': '/lessons/{id}/questions', 
+    'searchLessons': '/lessons/search',
+    'createLesson': '/lessons',
+    'updateLesson': '/lessons/{id}',
+    'deleteLesson': '/lessons/{id}',
+    'lessonsByLanguage': '/lessons/language/{language}',
+    'lessonsByDifficulty': '/lessons/difficulty/{difficulty}',
+    'health': '/actuator/health',
+  };
+  
+  /// User Progress Service Endpoints (Future)
+  static const Map<String, String> progressEndpoints = {
+    'userProgress': '/users/{userId}/progress',
+    'lessonProgress': '/users/{userId}/lessons/{lessonId}/progress',
+    'recordAnswer': '/users/{userId}/answers',
+    'syncProgress': '/users/{userId}/sync',
+    'streaks': '/users/{userId}/streaks',
+    'achievements': '/users/{userId}/achievements',
+  };
+  
+  /// Auth Service Endpoints (Future)
+  static const Map<String, String> authEndpoints = {
     'login': '/auth/login',
     'register': '/auth/register',
     'logout': '/auth/logout',
-    
-    // Lessons
-    'lessons': '/lessons',
-    'lessonById': '/lessons/{id}',
-    'lessonQuestions': '/lessons/{id}/questions',
-    'searchLessons': '/lessons/search',
-    
-    // User Progress
-    'userProgress': '/users/{userId}/progress',
-    'syncProgress': '/users/{userId}/sync',
-    'recordAnswer': '/users/{userId}/answers',
-    
-    // Analytics
+    'refresh': '/auth/refresh',
+    'profile': '/auth/profile',
+    'changePassword': '/auth/change-password',
+  };
+  
+  /// Analytics Service Endpoints (Future) 
+  static const Map<String, String> analyticsEndpoints = {
     'userStats': '/users/{userId}/stats',
     'leaderboard': '/leaderboard',
-    'achievements': '/users/{userId}/achievements',
-    
-    // Content
-    'languages': '/languages',
-    'topics': '/topics',
-    'difficulties': '/difficulties',
-    
-    // System
-    'health': '/health',
-    'version': '/version',
+    'systemStats': '/stats/system',
+    'lessonStats': '/stats/lessons',
+    'globalProgress': '/stats/global',
   };
   
   // ===== APP SETTINGS =====
@@ -80,22 +99,34 @@ class AppConfig {
   /// Use mock data when server is unavailable
   static const bool useMockDataInDev = true;
   
-  /// Development server URL (for testing)
-  static const String devApiBaseUrl = 'http://localhost:3000/api';
-  
   /// Enable debug mode
   static const bool isDebugMode = true; // Set to false for production
   
   // ===== HELPER METHODS =====
   
-  /// Get the appropriate base URL based on environment
-  static String get effectiveApiUrl {
-    return isDebugMode ? devApiBaseUrl : apiBaseUrl;
+  /// Get lessons service URL based on environment
+  static String get effectiveLessonsServiceUrl {
+    return isDebugMode ? lessonsServiceUrl : prodLessonsServiceUrl;
   }
   
-  /// Build full endpoint URL
-  static String buildEndpoint(String key, [Map<String, String>? params]) {
-    String endpoint = endpoints[key] ?? '';
+  /// Get user progress service URL based on environment
+  static String get effectiveProgressServiceUrl {
+    return isDebugMode ? userProgressServiceUrl : prodUserProgressServiceUrl;
+  }
+  
+  /// Get auth service URL based on environment
+  static String get effectiveAuthServiceUrl {
+    return isDebugMode ? authServiceUrl : prodAuthServiceUrl;
+  }
+  
+  /// Get analytics service URL based on environment
+  static String get effectiveAnalyticsServiceUrl {
+    return isDebugMode ? analyticsServiceUrl : prodAnalyticsServiceUrl;
+  }
+  
+  /// Build lessons service endpoint URL
+  static String buildLessonsEndpoint(String key, [Map<String, String>? params]) {
+    String endpoint = lessonsEndpoints[key] ?? '';
     
     if (params != null) {
       params.forEach((key, value) {
@@ -103,7 +134,46 @@ class AppConfig {
       });
     }
     
-    return effectiveApiUrl + endpoint;
+    return effectiveLessonsServiceUrl + endpoint;
+  }
+  
+  /// Build progress service endpoint URL
+  static String buildProgressEndpoint(String key, [Map<String, String>? params]) {
+    String endpoint = progressEndpoints[key] ?? '';
+    
+    if (params != null) {
+      params.forEach((key, value) {
+        endpoint = endpoint.replaceAll('{$key}', value);
+      });
+    }
+    
+    return effectiveProgressServiceUrl + endpoint;
+  }
+  
+  /// Build auth service endpoint URL
+  static String buildAuthEndpoint(String key, [Map<String, String>? params]) {
+    String endpoint = authEndpoints[key] ?? '';
+    
+    if (params != null) {
+      params.forEach((key, value) {
+        endpoint = endpoint.replaceAll('{$key}', value);
+      });
+    }
+    
+    return effectiveAuthServiceUrl + endpoint;
+  }
+  
+  /// Build analytics service endpoint URL
+  static String buildAnalyticsEndpoint(String key, [Map<String, String>? params]) {
+    String endpoint = analyticsEndpoints[key] ?? '';
+    
+    if (params != null) {
+      params.forEach((key, value) {
+        endpoint = endpoint.replaceAll('{$key}', value);
+      });
+    }
+    
+    return effectiveAnalyticsServiceUrl + endpoint;
   }
 }
 

@@ -5,9 +5,20 @@ import '../models/quiz_question.dart';
 import '../models/user_progress.dart';
 import '../config/app_config.dart';
 
+/// DEPRECATED: Use specific microservice classes instead
+/// 
+/// Migration Guide:
+/// - Lesson operations → Use LessonsApiService
+/// - User progress → Will use UserProgressApiService (when implemented)
+/// - Authentication → Will use AuthApiService (when implemented)  
+/// - Analytics → Will use AnalyticsApiService (when implemented)
+/// 
+/// This class is kept for backward compatibility only and will be removed
+/// once all microservices are implemented and integrated.
+@Deprecated('Use specific microservice API classes instead')
 class ApiService {
-  // Use configuration from AppConfig
-  static String get baseUrl => AppConfig.effectiveApiUrl;
+  // Use lessons service as default for backward compatibility
+  static String get baseUrl => AppConfig.effectiveLessonsServiceUrl;
   static String get apiKey => AppConfig.apiKey;
   
   // HTTP client for making requests
@@ -16,7 +27,7 @@ class ApiService {
   // Common headers for API requests
   static Map<String, String> get _headers => {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer $apiKey',
+    if (apiKey.isNotEmpty) 'Authorization': 'Bearer $apiKey',
   };
 
   // ===== LESSON ENDPOINTS =====
@@ -249,10 +260,11 @@ class ApiService {
 
   // ===== OFFLINE SUPPORT =====
   
-  /// Check server connectivity
+  /// Check server connectivity (uses lessons service health check)
   static Future<bool> isServerReachable() async {
     try {
-      final uri = Uri.parse('$baseUrl/health');
+      // Use Spring Boot Actuator health endpoint
+      final uri = Uri.parse('$baseUrl/../actuator/health');
       final response = await _client.get(uri, headers: _headers).timeout(
         const Duration(seconds: 5),
       );
@@ -295,24 +307,4 @@ class ApiException implements Exception {
   
   @override
   String toString() => 'ApiException: $message';
-}
-
-// Configuration class for API settings
-class ApiConfig {
-  static String baseUrl = 'https://your-api-server.com/api';
-  static String apiKey = 'your-api-key';
-  static Duration timeout = const Duration(seconds: 30);
-  static bool enableLogging = true;
-  
-  static void configure({
-    required String serverUrl,
-    String? key,
-    Duration? requestTimeout,
-    bool? logging,
-  }) {
-    baseUrl = serverUrl;
-    if (key != null) apiKey = key;
-    if (requestTimeout != null) timeout = requestTimeout;
-    if (logging != null) enableLogging = logging;
-  }
 }
