@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_progress.dart';
 import '../models/lesson.dart';
+import '../data/lesson_data.dart';
 import 'api_service.dart';
 
 class HybridStorageService {
@@ -355,10 +356,7 @@ class HybridStorageService {
   
   static List<Lesson> _getDefaultLessons() {
     // Return your current static lessons as fallback
-    // This is the same data from your lesson_data.dart
-    return [
-      // ... your existing lesson data
-    ];
+    return LessonData.getDefaultLessons();
   }
 
   // ===== CLEANUP =====

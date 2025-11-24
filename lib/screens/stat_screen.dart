@@ -2,19 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/progress_provider.dart';
 import '../models/user_progress.dart';
+import '../widgets/base_scaffold.dart';
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your Learning Stats'),
-        backgroundColor: Colors.blueGrey,
-        elevation: 0,
-      ),
-      body: Consumer<ProgressProvider>(
+    return BaseScaffold(
+      title: 'Your Learning Stats',
+      currentRoute: '/stats',
+      body: const StatsScreenContent(),
+    );
+  }
+}
+
+class StatsScreenContent extends StatelessWidget {
+  const StatsScreenContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ProgressProvider>(
         builder: (context, progressProvider, child) {
           final userProgress = progressProvider.userProgress;
           
@@ -59,52 +67,62 @@ class StatsScreen extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
+      );
   }
 
   Widget _buildStatsGrid(UserProgress userProgress, ProgressProvider progressProvider) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.2,
-      crossAxisSpacing: 20,
-      mainAxisSpacing: 20,
-      children: [
-        _buildStatCard(
-          'Lessons Completed',
-          '${userProgress.totalLessonsCompleted}',
-          Icons.check_circle,
-          Colors.green,
-        ),
-        _buildStatCard(
-          'Current Streak',
-          '${userProgress.currentStreak} ${userProgress.currentStreak == 1 ? 'Day' : 'Days'}',
-          Icons.local_fire_department,
-          Colors.orange,
-        ),
-        _buildStatCard(
-          'Total XP',
-          '${userProgress.totalXP}',
-          Icons.stars,
-          Colors.amber,
-        ),
-        _buildStatCard(
-          'Overall Accuracy',
-          '${(userProgress.overallAccuracy * 100).toInt()}%',
-          Icons.track_changes,
-          Colors.blue,
-        ),
-        _buildStatCard(
+  return Column(
+    children: [
+      GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        childAspectRatio: 1.2,
+        crossAxisSpacing: 20,
+        mainAxisSpacing: 20,
+        children: [
+          _buildStatCard(
+            'Lessons Completed',
+            '${userProgress.totalLessonsCompleted}',
+            Icons.check_circle,
+            Colors.green,
+          ),
+          _buildStatCard(
+            'Current Streak',
+            '${userProgress.currentStreak} ${userProgress.currentStreak == 1 ? 'Day' : 'Days'}',
+            Icons.local_fire_department,
+            Colors.orange,
+          ),
+          _buildStatCard(
+            'Total XP',
+            '${userProgress.totalXP}',
+            Icons.stars,
+            Colors.amber,
+          ),
+          _buildStatCard(
+            'Overall Accuracy',
+            '${(userProgress.overallAccuracy * 100).toInt()}%',
+            Icons.track_changes,
+            Colors.blue,
+          ),
+        ],
+      ),
+
+      // const SizedBox(height: 1),
+
+      SizedBox(
+        width: double.infinity,
+        child: _buildStatCard(
           'Rank',
-          '1', 
+          '-',
           Icons.smart_toy_sharp,
-          Colors.pink
+          Colors.pink,
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
+
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Card(

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/progress_provider.dart';
-import 'screens/home_screen.dart';
+import 'widgets/main_layout.dart';
 import 'screens/lesson_screen.dart';
 import 'screens/stat_screen.dart';
+import 'screens/settings_screen.dart';
 import 'services/storage_service.dart';
 
 void main() async {
@@ -34,9 +35,10 @@ class LanguageLearningApp extends StatelessWidget {
         ),
         initialRoute: '/',
         routes: {
-          '/': (context) => const HomeScreen(),
+          '/': (context) => const MainLayout(),
           '/lesson': (context) => const LessonScreen(),
           '/stats': (context) => const StatsScreen(),
+          '/settings': (context) => const SettingsScreen(),
         },
       ),
     );
