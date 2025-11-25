@@ -18,7 +18,7 @@ class LessonData {
             id: 'greeting_1',
             question: 'Select the Spanish word for "Hello"',
             correctAnswer: 'Hola',
-            options: ['Guten Tag', 'Bonjour', 'Hola', 'Ciao'],
+            options: ['Guten Tag konlokak', 'Bonjour', 'Hola', 'Ciao'],
             language: 'Spanish',
             difficulty: Difficulty.beginner,
             explanation: 'Hola is the most common and friendly way to say hello in Spanish.',

@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_progress.dart';
 import '../models/lesson.dart';
 import '../models/quiz_question.dart';
 import '../services/storage_service.dart';
 import '../services/hybrid_storage_service.dart';
+import '../services/lessons_api_service.dart';
 // import '../services/api_service.dart';
 
 class ProgressProvider extends ChangeNotifier {
@@ -11,12 +13,14 @@ class ProgressProvider extends ChangeNotifier {
   List<Lesson> _lessons = [];
   bool _isLoading = false;
   String? _error;
+  String _dataSource = 'unknown';
 
   // Getters
   UserProgress get userProgress => _userProgress;
   List<Lesson> get lessons => _lessons;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  String get dataSource => _dataSource;
 
   // Computed getters
   int get totalLessonsAvailable => _lessons.length;
@@ -66,12 +70,54 @@ class ProgressProvider extends ChangeNotifier {
   // Load lessons using hybrid strategy (API + local cache)
   Future<void> _loadOrCreateLessons() async {
     try {
+      print('\n🚀 [PROVIDER] Starting lesson loading process...');
+      
       // Use HybridStorageService for seamless API + cache integration
       _lessons = await HybridStorageService.fetchLessons();
+      
+      // Determine data source based on the logging output
+      // This is a simple way to track the source without modifying HybridStorageService return type
+      _dataSource = await _determineDataSource();
+      
+      print('✅ [PROVIDER] Successfully loaded ${_lessons.length} lessons from $_dataSource');
     } catch (e) {
+      print('🚨 [PROVIDER] Error loading lessons, using fallback: $e');
       // Final fallback to hardcoded lessons
       _lessons = _createDefaultLessons();
-      print('Using fallback lessons due to error: $e');
+      _dataSource = 'fallback';
+      print('⚠️ [PROVIDER] Using ${_lessons.length} fallback lessons due to error: $e');
+    }
+  }
+  
+  // Determine the data source based on service availability
+  Future<String> _determineDataSource() async {
+    try {
+      // Check if we have recent cache
+      final lastSync = await HybridStorageService.getLastSyncTime();
+      final now = DateTime.now();
+      
+      // If synced in the last 5 minutes, likely from API
+      if (lastSync != null && now.difference(lastSync).inMinutes < 5) {
+        return 'api';
+      }
+      
+      // Check if API is available now
+      final isApiAvailable = await LessonsApiService.isServiceReachable();
+      if (isApiAvailable) {
+        return 'api';
+      }
+      
+      // Check if we have any cached lessons
+      final prefs = await SharedPreferences.getInstance();
+      final cachedLessons = prefs.getString('lessons');
+      if (cachedLessons != null) {
+        return 'cache';
+      }
+      
+      // Otherwise it's default/offline
+      return 'default';
+    } catch (e) {
+      return 'unknownadfslk';
     }
   }
 

@@ -49,55 +49,82 @@ class HybridStorageService {
     String? difficulty,
     bool forceRefresh = false,
   }) async {
+    print('\n🚀 [HYBRID] Starting lesson fetch with fallback strategy...');
+    print('🔍 [HYBRID] Parameters: language=$language, difficulty=$difficulty, forceRefresh=$forceRefresh');
+    
     try {
       // Check if we should try Lessons API first
+      print('🌐 [HYBRID] Step 1: Checking if Lessons microservice is available...');
+      
       if (await LessonsApiService.isServiceReachable() || forceRefresh) {
+        print('✅ [HYBRID] 🚀 Lessons microservice is ONLINE! Fetching from API...');
+        
         final apiLessons = await LessonsApiService.fetchLessons(
           language: language,
           difficulty: difficulty,
         );
         
         // Cache the lessons locally
+        print('💾 [HYBRID] Caching ${apiLessons.length} lessons locally for offline use');
         await _cacheLessons(apiLessons);
         await _updateLastSync();
         
+        print('✅ [HYBRID] 🎆 SUCCESS: Returned ${apiLessons.length} lessons from MICROSERVICE API');
         return apiLessons;
+      } else {
+        print('⚠️ [HYBRID] Lessons microservice is OFFLINE, proceeding with fallback...');
       }
     } catch (e) {
-      print('Lessons API fetch failed, falling back to cache: $e');
+      print('🚨 [HYBRID] API fetch failed: $e');
+      print('🔄 [HYBRID] Falling back to cached/local lessons...');
     }
     
     // Fallback to cached lessons
+    print('💾 [HYBRID] Step 2: Attempting to load cached lessons...');
     final cachedLessons = await _loadCachedLessons();
     if (cachedLessons.isNotEmpty) {
+      print('✅ [HYBRID] 💾 Found ${cachedLessons.length} cached lessons');
+      print('✅ [HYBRID] 🎆 SUCCESS: Returned ${cachedLessons.length} lessons from LOCAL CACHE');
       return cachedLessons;
+    } else {
+      print('⚠️ [HYBRID] No cached lessons found');
     }
     
-    // Final fallback to default lessons (from your current lesson_data.dart)
-    return _getDefaultLessons();
+    // Final fallback to default lessons
+    print('📜 [HYBRID] Step 3: Using default lessons as final fallback...');
+    final defaultLessons = _getDefaultLessons();
+    print('✅ [HYBRID] 🎆 SUCCESS: Returned ${defaultLessons.length} lessons from DEFAULT DATA');
+    return defaultLessons;
   }
   
   static Future<void> _cacheLessons(List<Lesson> lessons) async {
     try {
+      print('💾 [CACHE] Saving ${lessons.length} lessons to local cache...');
       final prefs = await _preferences;
       final jsonString = jsonEncode(lessons.map((l) => l.toJson()).toList());
       await prefs.setString(_lessonsKey, jsonString);
+      print('✅ [CACHE] Successfully cached ${lessons.length} lessons locally');
     } catch (e) {
-      print('Error caching lessons: $e');
+      print('❌ [CACHE] Error caching lessons: $e');
     }
   }
   
   static Future<List<Lesson>> _loadCachedLessons() async {
     try {
+      print('🔍 [CACHE] Checking for cached lessons...');
       final prefs = await _preferences;
       final jsonString = prefs.getString(_lessonsKey);
       
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
-        return jsonList.map((json) => Lesson.fromJson(json)).toList();
+        final lessons = jsonList.map((json) => Lesson.fromJson(json)).toList();
+        print('✅ [CACHE] Found ${lessons.length} cached lessons');
+        return lessons;
+      } else {
+        print('⚠️ [CACHE] No cached lessons found');
       }
     } catch (e) {
-      print('Error loading cached lessons: $e');
+      print('❌ [CACHE] Error loading cached lessons: $e');
     }
     
     return [];
@@ -285,7 +312,10 @@ class HybridStorageService {
   
   static List<Lesson> _getDefaultLessons() {
     // Return your current static lessons as fallback
-    return LessonData.getDefaultLessons();
+    print('📜 [DEFAULT] Loading built-in default lessons...');
+    final lessons = LessonData.getDefaultLessons();
+    print('✅ [DEFAULT] Loaded ${lessons.length} default lessons: ${lessons.map((l) => l.title).join(', ')}');
+    return lessons;
   }
 
   // ===== CLEANUP =====

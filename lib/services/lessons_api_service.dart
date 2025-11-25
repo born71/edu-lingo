@@ -10,15 +10,20 @@ class LessonsApiService {
   /// Check if lessons service is reachable
   static Future<bool> isServiceReachable() async {
     try {
-      final url = AppConfig.buildLessonsEndpoint('health');
+      final url = AppConfig.buildLessonsEndpoint('lessons');
+      print('🔍 [API] Checking lessons service health: $url');
+      
       final response = await http.get(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
       ).timeout(_timeout);
       
-      return response.statusCode == 200;
+      final isReachable = response.statusCode == 200;
+      print('✅ [API] Lessons service ${isReachable ? 'ONLINE' : 'OFFLINE'} (Status: ${response.statusCode})');
+      
+      return isReachable;
     } catch (e) {
-      print('Lessons service health check failed: $e');
+      print('❌ [API] Lessons service health check failed: $e');
       return false;
     }
   }
@@ -30,15 +35,23 @@ class LessonsApiService {
   }) async {
     try {
       String url;
+      String filterInfo = '';
       
       if (language != null) {
         url = AppConfig.buildLessonsEndpoint('lessonsByLanguage', {'language': language});
+        filterInfo = ' (filtered by language: $language)';
       } else if (difficulty != null) {
         url = AppConfig.buildLessonsEndpoint('lessonsByDifficulty', {'difficulty': difficulty});
+        filterInfo = ' (filtered by difficulty: $difficulty)';
       } else {
         url = AppConfig.buildLessonsEndpoint('lessons');
+        filterInfo = ' (all lessons)';
       }
 
+      print('🌐 [API] Fetching lessons from microservice$filterInfo');
+      print('📡 [API] Request URL: $url');
+      
+      final stopwatch = Stopwatch()..start();
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -46,15 +59,22 @@ class LessonsApiService {
           if (AppConfig.apiKey.isNotEmpty) 'Authorization': 'Bearer ${AppConfig.apiKey}',
         },
       ).timeout(_timeout);
+      stopwatch.stop();
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        return jsonList.map((json) => Lesson.fromJson(json)).toList();
+        final lessons = jsonList.map((json) => Lesson.fromJson(json)).toList();
+        
+        print('✅ [API] Successfully fetched ${lessons.length} lessons from API in ${stopwatch.elapsedMilliseconds}ms');
+        print('📋 [API] Lessons received: ${lessons.map((l) => l.title).join(', ')}');
+        
+        return lessons;
       } else {
+        print('❌ [API] Failed to fetch lessons: ${response.statusCode} ${response.reasonPhrase}');
         throw Exception('Failed to fetch lessons: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
-      print('Error fetching lessons: $e');
+      print('💥 [API] Error fetching lessons from microservice: $e');
       rethrow;
     }
   }
@@ -64,6 +84,9 @@ class LessonsApiService {
     try {
       final url = AppConfig.buildLessonsEndpoint('lessonById', {'id': lessonId});
 
+      print('🔍 [API] Fetching specific lesson: $lessonId');
+      print('📡 [API] Request URL: $url');
+      
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -74,14 +97,18 @@ class LessonsApiService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = jsonDecode(response.body);
-        return Lesson.fromJson(json);
+        final lesson = Lesson.fromJson(json);
+        print('✅ [API] Successfully fetched lesson "${lesson.title}" from API');
+        return lesson;
       } else if (response.statusCode == 404) {
+        print('❌ [API] Lesson not found: $lessonId');
         return null; // Lesson not found
       } else {
+        print('❌ [API] Failed to fetch lesson: ${response.statusCode} ${response.reasonPhrase}');
         throw Exception('Failed to fetch lesson: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
-      print('Error fetching lesson by ID: $e');
+      print('💥 [API] Error fetching lesson by ID: $e');
       rethrow;
     }
   }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/progress_provider.dart';
 import '../models/lesson.dart';
 import '../widgets/base_scaffold.dart';
+import '../widgets/data_source_indicator.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -142,13 +143,22 @@ class HomeScreenContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Available Lessons
-                const Text(
-                  'Available Lessons',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                // Available Lessons with Data Source Indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Available Lessons',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    DataSourceIndicator(
+                      source: progressProvider.dataSource,
+                      isLoading: progressProvider.isLoading,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 15),
 
