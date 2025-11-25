@@ -6,6 +6,7 @@ import '../models/quiz_question.dart';
 import '../services/storage_service.dart';
 import '../services/hybrid_storage_service.dart';
 import '../services/lessons_api_service.dart';
+import '../data/lesson_data.dart';
 // import '../services/api_service.dart';
 
 class ProgressProvider extends ChangeNotifier {
@@ -67,25 +68,40 @@ class ProgressProvider extends ChangeNotifier {
     }
   }
 
-  // Load lessons using hybrid strategy (API + local cache)
+  // Load lessons from API service directly, then fallback to local data
   Future<void> _loadOrCreateLessons() async {
+    print('\n🚀 [PROVIDER] Starting lesson loading process...');
+    
+    // First try: Direct API call
     try {
-      print('\n🚀 [PROVIDER] Starting lesson loading process...');
+      print('🌐 [PROVIDER] Attempting to fetch lessons from API service...');
+      final apiLessons = await LessonsApiService.fetchLessons();
       
-      // Use HybridStorageService for seamless API + cache integration
-      _lessons = await HybridStorageService.fetchLessons();
-      
-      // Determine data source based on the logging output
-      // This is a simple way to track the source without modifying HybridStorageService return type
-      _dataSource = await _determineDataSource();
-      
-      print('✅ [PROVIDER] Successfully loaded ${_lessons.length} lessons from $_dataSource');
+      if (apiLessons.isNotEmpty) {
+        _lessons = apiLessons;
+        _dataSource = 'api';
+        print('✅ [PROVIDER] Successfully loaded ${_lessons.length} lessons from API');
+        print('📋 [PROVIDER] API Lessons: ${_lessons.map((l) => l.title).join(', ')}');
+        return;
+      } else {
+        print('⚠️ [PROVIDER] API returned empty lessons list');
+      }
     } catch (e) {
-      print('🚨 [PROVIDER] Error loading lessons, using fallback: $e');
-      // Final fallback to hardcoded lessons
-      _lessons = _createDefaultLessons();
-      _dataSource = 'fallback';
-      print('⚠️ [PROVIDER] Using ${_lessons.length} fallback lessons due to error: $e');
+      print('❌ [PROVIDER] API fetch failed: $e');
+    }
+    
+    // Second try: Local lesson data from lesson_data.dart
+    try {
+      print('📄 [PROVIDER] Falling back to local lesson data...');
+      _lessons = LessonData.getDefaultLessons();
+      _dataSource = 'local';
+      print('✅ [PROVIDER] Successfully loaded ${_lessons.length} lessons from lesson_data.dart');
+      print('📋 [PROVIDER] Local Lessons: ${_lessons.map((l) => l.title).join(', ')}');
+    } catch (e) {
+      print('🚨 [PROVIDER] Critical error - could not load any lessons: $e');
+      _lessons = [];
+      _dataSource = 'error';
+      throw Exception('Failed to load lessons from both API and local data: $e');
     }
   }
   

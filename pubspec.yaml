@@ -47,6 +47,9 @@ dependencies:
   # HTTP client for API requests
   http: ^1.1.0
 
+  #loading animation package
+  loading_animation_widget:
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -99,3 +102,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+ 

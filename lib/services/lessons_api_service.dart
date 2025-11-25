@@ -11,7 +11,7 @@ class LessonsApiService {
   static Future<bool> isServiceReachable() async {
     try {
       final url = AppConfig.buildLessonsEndpoint('lessons');
-      print('🔍 [API] Checking lessons service health: $url');
+      print('🔍 [API] Checking lessons service lessons: $url');
       
       final response = await http.get(
         Uri.parse(url),
@@ -62,7 +62,28 @@ class LessonsApiService {
       stopwatch.stop();
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body);
+        // Check if response body is empty or null
+        if (response.body.isEmpty) {
+          print('⚠️ [API] Response body is empty, returning empty lessons list');
+          return <Lesson>[];
+        }
+        
+        // Parse JSON safely
+        final dynamic jsonData = jsonDecode(response.body);
+        
+        // Check if the parsed data is actually a list
+        if (jsonData == null) {
+          print('⚠️ [API] Response body parsed to null, returning empty lessons list');
+          return <Lesson>[];
+        }
+        
+        if (jsonData is! List) {
+          print('⚠️ [API] Response is not a JSON array, got: ${jsonData.runtimeType}');
+          print('📄 [API] Response content: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
+          throw Exception('Expected JSON array but got ${jsonData.runtimeType}');
+        }
+        
+        final List<dynamic> jsonList = jsonData;
         final lessons = jsonList.map((json) => Lesson.fromJson(json)).toList();
         
         print('✅ [API] Successfully fetched ${lessons.length} lessons from API in ${stopwatch.elapsedMilliseconds}ms');

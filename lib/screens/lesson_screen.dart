@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/progress_provider.dart';
 import '../models/lesson.dart';
 import '../models/quiz_question.dart';
+import '../widgets/animated_widgets.dart';
 
 class LessonScreen extends StatefulWidget {
   const LessonScreen({super.key});
@@ -11,7 +12,7 @@ class LessonScreen extends StatefulWidget {
   State<LessonScreen> createState() => _LessonScreenState();
 }
 
-class _LessonScreenState extends State<LessonScreen> {
+class _LessonScreenState extends State<LessonScreen> with SingleTickerProviderStateMixin {
   int _currentQuestionIndex = 0;
   String? _selectedAnswer;
   bool _isAnswerChecked = false;
@@ -19,6 +20,35 @@ class _LessonScreenState extends State<LessonScreen> {
   Color _feedbackColor = Colors.transparent;
   Lesson? _currentLesson;
   bool _isLoading = true;
+  
+  // Animation controllers
+  late AnimationController _questionAnimationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _questionAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _questionAnimationController, curve: Curves.easeOut),
+    );
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.1, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _questionAnimationController, curve: Curves.easeOutCubic));
+  }
+
+  @override
+  void dispose() {
+    _questionAnimationController.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -48,6 +78,9 @@ class _LessonScreenState extends State<LessonScreen> {
       setState(() {
         _isLoading = false;
       });
+      
+      // Start the question animation
+      _questionAnimationController.forward();
     }
   }
 
@@ -119,12 +152,16 @@ class _LessonScreenState extends State<LessonScreen> {
       return;
     }
 
-    setState(() {
-      _isAnswerChecked = false;
-      _selectedAnswer = null;
-      _feedbackMessage = null;
-      _feedbackColor = Colors.transparent;
-      _currentQuestionIndex++;
+    // Animate out, then change question, then animate in
+    _questionAnimationController.reverse().then((_) {
+      setState(() {
+        _isAnswerChecked = false;
+        _selectedAnswer = null;
+        _feedbackMessage = null;
+        _feedbackColor = Colors.transparent;
+        _currentQuestionIndex++;
+      });
+      _questionAnimationController.forward();
     });
   }
 
@@ -142,10 +179,25 @@ class _LessonScreenState extends State<LessonScreen> {
     final correctAnswers = lessonProgress?.correctAnswers ?? 0;
     final totalQuestions = _currentLesson!.questions.length;
 
-    showDialog(
+    showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      barrierLabel: 'Lesson Complete',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 600),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return ScaleTransition(
+          scale: CurvedAnimation(
+            parent: animation,
+            curve: Curves.elasticOut,
+          ),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) => AlertDialog(
         title: Row(
           children: [
             Icon(Icons.celebration, color: Colors.amber, size: 32),
@@ -237,9 +289,11 @@ class _LessonScreenState extends State<LessonScreen> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Loading...'),
-          backgroundColor: Colors.green.shade400,
+          backgroundColor: const Color(0xFF1E1E2E),
+          foregroundColor: Colors.white,
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        backgroundColor: const Color(0xFF121212),
+        body: const LoadingOverlay(message: 'Preparing lesson...'),
       );
     }
 
@@ -247,8 +301,10 @@ class _LessonScreenState extends State<LessonScreen> {
       return Scaffold(
         appBar: AppBar(
           title: Text(_currentLesson!.title),
-          backgroundColor: Colors.green.shade400,
+          backgroundColor: const Color(0xFF1E1E2E),
+          foregroundColor: Colors.white,
         ),
+        backgroundColor: const Color(0xFF121212),
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -268,9 +324,11 @@ class _LessonScreenState extends State<LessonScreen> {
     final double progress = (_currentQuestionIndex + 1) / _currentLesson!.questions.length;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         title: Text(_currentLesson!.title),
-        backgroundColor: Colors.green.shade400,
+        backgroundColor: const Color(0xFF1E1E2E),
+        foregroundColor: Colors.white,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
@@ -292,8 +350,8 @@ class _LessonScreenState extends State<LessonScreen> {
               children: [
                 LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: Colors.grey.shade300,
-                  color: Colors.amber,
+                  backgroundColor: Colors.grey.shade800,
+                  color: Colors.deepPurple.shade300,
                   minHeight: 10,
                   borderRadius: const BorderRadius.all(Radius.circular(5)),
                 ),
@@ -330,22 +388,26 @@ class _LessonScreenState extends State<LessonScreen> {
             ),
           ),
 
-          // Question Card
+          // Question Card with Animation
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // The main question text
-                  Container(
-                    padding: const EdgeInsets.all(20.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // The main question text
+                      Container(
+                        padding: const EdgeInsets.all(20.0),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E2E),
+                          borderRadius: BorderRadius.circular(15),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withOpacity(0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
@@ -358,14 +420,14 @@ class _LessonScreenState extends State<LessonScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.blue.shade100,
+                              color: Colors.deepPurple.shade900,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               currentQuestion.language,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.blue.shade700,
+                                color: Colors.purpleAccent.shade100,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -377,6 +439,7 @@ class _LessonScreenState extends State<LessonScreen> {
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -386,21 +449,21 @@ class _LessonScreenState extends State<LessonScreen> {
 
                   // Option Buttons
                   ...currentQuestion.options.map((option) {
-                    Color buttonColor = Colors.white;
-                    Color borderColor = Colors.grey.shade300;
-                    Color textColor = Colors.black87;
+                    Color buttonColor = const Color(0xFF1E1E2E);
+                    Color borderColor = Colors.grey.shade700;
+                    Color textColor = Colors.white;
 
                     if (_isAnswerChecked) {
                       if (option == currentQuestion.correctAnswer) {
-                        borderColor = Colors.green.shade600;
-                        buttonColor = Colors.green.shade50;
+                        borderColor = Colors.green.shade400;
+                        buttonColor = Colors.green.shade900;
                       } else if (option == _selectedAnswer) {
-                        borderColor = Colors.red.shade600;
-                        buttonColor = Colors.red.shade50;
+                        borderColor = Colors.red.shade400;
+                        buttonColor = Colors.red.shade900;
                       }
                     } else if (option == _selectedAnswer) {
-                      borderColor = Colors.blue.shade600;
-                      buttonColor = Colors.blue.shade50;
+                      borderColor = Colors.deepPurple.shade300;
+                      buttonColor = Colors.deepPurple.shade900;
                     }
 
                     return Padding(
@@ -426,7 +489,9 @@ class _LessonScreenState extends State<LessonScreen> {
                       ),
                     );
                   }).toList(),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -435,10 +500,10 @@ class _LessonScreenState extends State<LessonScreen> {
           Container(
             padding: const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
-              color: _isAnswerChecked ? _feedbackColor.withOpacity(0.9) : Colors.white,
+              color: _isAnswerChecked ? _feedbackColor.withOpacity(0.9) : const Color(0xFF1E1E2E),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.3),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),
@@ -471,8 +536,8 @@ class _LessonScreenState extends State<LessonScreen> {
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 55),
                       backgroundColor: _isAnswerChecked
-                          ? Colors.blue.shade600
-                          : Colors.green.shade600,
+                          ? Colors.purple.shade400
+                          : Colors.deepPurple.shade400,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

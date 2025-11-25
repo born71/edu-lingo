@@ -167,11 +167,11 @@ class StatsScreenContent extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.trending_up, color: Colors.green.shade600),
+                Icon(Icons.trending_up, color: Colors.deepPurple.shade300),
                 const SizedBox(width: 10),
                 const Text(
                   'Learning Progress',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ],
             ),
@@ -366,18 +366,18 @@ class StatsScreenContent extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade100,
+                  color: Colors.deepPurple.shade900,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle, color: Colors.green.shade600, size: 16),
+                    Icon(Icons.check_circle, color: Colors.purpleAccent.shade100, size: 16),
                     const SizedBox(width: 6),
                     Text(
                       'Studied today!',
                       style: TextStyle(
-                        color: Colors.green.shade700,
+                        color: Colors.purpleAccent.shade100,
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),

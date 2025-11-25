@@ -56,32 +56,33 @@ class DataSourceIndicator extends StatelessWidget {
       case 'api':
       case 'microservice':
         icon = Icons.cloud_done;
-        backgroundColor = Colors.green.shade100;
-        borderColor = Colors.green.shade300;
-        textColor = Colors.green.shade700;
+        backgroundColor = Colors.deepPurple.shade900;
+        borderColor = Colors.deepPurple.shade400;
+        textColor = Colors.purpleAccent.shade100;
         displayText = '🌐 Live API';
         break;
       case 'cache':
       case 'cached':
         icon = Icons.storage;
-        backgroundColor = Colors.blue.shade100;
-        borderColor = Colors.blue.shade300;
-        textColor = Colors.blue.shade700;
+        backgroundColor = Colors.indigo.shade900;
+        borderColor = Colors.indigo.shade400;
+        textColor = Colors.indigoAccent.shade100;
         displayText = '💾 Cached';
         break;
+      case 'local':
       case 'default':
       case 'offline':
         icon = Icons.folder;
-        backgroundColor = Colors.grey.shade100;
-        borderColor = Colors.grey.shade300;
-        textColor = Colors.grey.shade700;
-        displayText = '📄 Offline';
+        backgroundColor = Colors.grey.shade800;
+        borderColor = Colors.grey.shade600;
+        textColor = Colors.grey.shade300;
+        displayText = '📄 Local';
         break;
       default:
         icon = Icons.help_outline;
-        backgroundColor = Colors.amber.shade100;
-        borderColor = Colors.amber.shade300;
-        textColor = Colors.amber.shade700;
+        backgroundColor = Colors.amber.shade900;
+        borderColor = Colors.amber.shade600;
+        textColor = Colors.amber.shade200;
         displayText = '❓ $source';
     }
 

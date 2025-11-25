@@ -4,6 +4,7 @@ import '../providers/progress_provider.dart';
 import '../models/lesson.dart';
 import '../widgets/base_scaffold.dart';
 import '../widgets/data_source_indicator.dart';
+import '../widgets/animated_widgets.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,7 +27,7 @@ class HomeScreenContent extends StatelessWidget {
     return Consumer<ProgressProvider>(
         builder: (context, progressProvider, child) {
           if (progressProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const LoadingOverlay(message: 'Loading lessons...');
           }
 
           if (progressProvider.error != null) {
@@ -61,7 +62,7 @@ class HomeScreenContent extends StatelessWidget {
                 Icon(
                   Icons.school,
                   size: 80,
-                  color: Colors.green.shade700,
+                  color: Colors.deepPurple.shade300,
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -70,7 +71,7 @@ class HomeScreenContent extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -89,13 +90,14 @@ class HomeScreenContent extends StatelessWidget {
                         Row(
                           children: [
                             Icon(Icons.trending_up, 
-                                 color: Colors.green.shade600),
+                                 color: Colors.deepPurple.shade300),
                             const SizedBox(width: 10),
                             const Text(
                               'Your Progress',
                               style: TextStyle(
                                 fontSize: 18, 
-                                fontWeight: FontWeight.bold
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                           ],
@@ -103,8 +105,8 @@ class HomeScreenContent extends StatelessWidget {
                         const SizedBox(height: 15),
                         LinearProgressIndicator(
                           value: progressProvider.overallProgress,
-                          color: Colors.green,
-                          backgroundColor: Colors.grey.shade300,
+                          color: Colors.deepPurple.shade300,
+                          backgroundColor: Colors.grey.shade800,
                           minHeight: 8,
                           borderRadius: const BorderRadius.all(Radius.circular(4)),
                         ),
@@ -206,7 +208,7 @@ class HomeScreenContent extends StatelessWidget {
                                 if (isCompleted)
                                   Icon(
                                     Icons.check_circle,
-                                    color: Colors.green.shade600,
+                                    color: Colors.purpleAccent.shade100,
                                     size: 30,
                                   ),
                               ],
@@ -216,8 +218,8 @@ class HomeScreenContent extends StatelessWidget {
                             if (progress > 0) ...[
                               LinearProgressIndicator(
                                 value: progress,
-                                color: isCompleted ? Colors.green : Colors.orange,
-                                backgroundColor: Colors.grey.shade300,
+                                color: isCompleted ? Colors.purpleAccent.shade100 : Colors.deepPurple.shade300,
+                                backgroundColor: Colors.grey.shade800,
                                 minHeight: 6,
                                 borderRadius: const BorderRadius.all(Radius.circular(3)),
                               ),
@@ -240,8 +242,8 @@ class HomeScreenContent extends StatelessWidget {
                                     label: Text(isCompleted ? 'Review' : 'Start Lesson'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: isCompleted 
-                                          ? Colors.blue.shade600 
-                                          : Colors.green.shade600,
+                                          ? Colors.purple.shade400 
+                                          : Colors.deepPurple.shade400,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
