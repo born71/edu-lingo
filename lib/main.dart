@@ -6,6 +6,7 @@ import 'screens/lesson_screen.dart';
 import 'screens/stat_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/profile_screen.dart';
 import 'services/storage_service.dart';
 import 'utils/page_transitions.dart';
 
@@ -74,6 +75,8 @@ class LanguageLearningApp extends StatelessWidget {
               return FadeSlideRoute(page: const StatsScreen());
             case '/settings':
               return FadeSlideRoute(page: const SettingsScreen());
+            case '/profile':
+              return SlideRightRoute(page: const ProfileScreen());
             default:
               return FadeSlideRoute(page: const MainLayout());
           }

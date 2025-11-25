@@ -33,6 +33,20 @@ class SettingsScreenContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
+                        'Account',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 15),
+                      ListTile(
+                        leading: Icon(Icons.person, color: Colors.deepPurple.shade300),
+                        title: const Text('Profile'),
+                        subtitle: const Text('Edit your profile information'),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () => Navigator.pushNamed(context, '/profile'),
+                      ),
+                      const Divider(),
+                      const SizedBox(height: 15),
+                      const Text(
                         'Preferences',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),

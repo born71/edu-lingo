@@ -87,6 +87,12 @@ class UserProgress {
   final DateTime createdAt;
   final String preferredLanguage;
   final int dailyGoal; // in minutes
+  
+  // Profile fields
+  final String displayName;
+  final String email;
+  final String bio;
+  final String avatarUrl;
 
   UserProgress({
     this.lessonProgress = const {},
@@ -99,6 +105,10 @@ class UserProgress {
     DateTime? createdAt,
     this.preferredLanguage = 'Spanish',
     this.dailyGoal = 15,
+    this.displayName = '',
+    this.email = '',
+    this.bio = '',
+    this.avatarUrl = '',
   }) : createdAt = createdAt ?? DateTime.now();
 
   double get overallAccuracy => totalQuestionsAnswered > 0 
@@ -141,6 +151,10 @@ class UserProgress {
       'createdAt': createdAt.toIso8601String(),
       'preferredLanguage': preferredLanguage,
       'dailyGoal': dailyGoal,
+      'displayName': displayName,
+      'email': email,
+      'bio': bio,
+      'avatarUrl': avatarUrl,
     };
   }
 
@@ -162,6 +176,10 @@ class UserProgress {
           : DateTime.now(),
       preferredLanguage: json['preferredLanguage'] ?? 'Spanish',
       dailyGoal: json['dailyGoal'] ?? 15,
+      displayName: json['displayName'] ?? '',
+      email: json['email'] ?? '',
+      bio: json['bio'] ?? '',
+      avatarUrl: json['avatarUrl'] ?? '',
     );
   }
 
@@ -176,6 +194,10 @@ class UserProgress {
     DateTime? createdAt,
     String? preferredLanguage,
     int? dailyGoal,
+    String? displayName,
+    String? email,
+    String? bio,
+    String? avatarUrl,
   }) {
     return UserProgress(
       lessonProgress: lessonProgress ?? this.lessonProgress,
@@ -188,6 +210,10 @@ class UserProgress {
       createdAt: createdAt ?? this.createdAt,
       preferredLanguage: preferredLanguage ?? this.preferredLanguage,
       dailyGoal: dailyGoal ?? this.dailyGoal,
+      displayName: displayName ?? this.displayName,
+      email: email ?? this.email,
+      bio: bio ?? this.bio,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 }
