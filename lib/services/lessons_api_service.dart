@@ -68,6 +68,8 @@ class LessonsApiService {
           return <Lesson>[];
         }
         
+        print('📥 [API] Raw response (first 500 chars): ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}');
+        
         // Parse JSON safely
         final dynamic jsonData = jsonDecode(response.body);
         
@@ -84,10 +86,22 @@ class LessonsApiService {
         }
         
         final List<dynamic> jsonList = jsonData;
-        final lessons = jsonList.map((json) => Lesson.fromJson(json)).toList();
+        print('📊 [API] Parsing ${jsonList.length} lessons from JSON...');
+        
+        final List<Lesson> lessons = [];
+        for (int i = 0; i < jsonList.length; i++) {
+          try {
+            final lesson = Lesson.fromJson(jsonList[i]);
+            lessons.add(lesson);
+            print('  ✅ Parsed lesson ${i + 1}: "${lesson.title}" with ${lesson.questions.length} questions');
+          } catch (e) {
+            print('  ❌ Failed to parse lesson ${i + 1}: $e');
+            print('  📄 Raw JSON: ${jsonList[i]}');
+          }
+        }
         
         print('✅ [API] Successfully fetched ${lessons.length} lessons from API in ${stopwatch.elapsedMilliseconds}ms');
-        print('📋 [API] Lessons received: ${lessons.map((l) => l.title).join(', ')}');
+        print('📋 [API] Lessons received: ${lessons.map((l) => "${l.title} (${l.questions.length} Q)").join(', ')}');
         
         return lessons;
       } else {

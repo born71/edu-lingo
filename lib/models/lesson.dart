@@ -40,20 +40,29 @@ class Lesson {
   }
 
   factory Lesson.fromJson(Map<String, dynamic> json) {
-    return Lesson(
-      id: json['id'],
-      title: json['title'],
-      description: json['description'],
-      questions: (json['questions'] as List)
+    // Handle questions - may be null, empty, or a list
+    List<QuizQuestion> parsedQuestions = [];
+    if (json['questions'] != null && json['questions'] is List) {
+      parsedQuestions = (json['questions'] as List)
           .map((q) => QuizQuestion.fromJson(q))
-          .toList(),
-      language: json['language'] ?? 'Mixed',
+          .toList();
+    }
+    
+    // Handle difficulty - may be uppercase (API) or lowercase (local)
+    final difficultyStr = (json['difficulty'] as String?)?.toLowerCase() ?? 'beginner';
+    
+    return Lesson(
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      questions: parsedQuestions,
+      language: json['language']?.toString() ?? 'Mixed',
       difficulty: Difficulty.values.firstWhere(
-        (e) => e.name == json['difficulty'],
+        (e) => e.name.toLowerCase() == difficultyStr,
         orElse: () => Difficulty.beginner,
       ),
-      iconUrl: json['iconUrl'],
-      estimatedMinutes: json['estimatedMinutes'] ?? 10,
+      iconUrl: json['iconUrl']?.toString(),
+      estimatedMinutes: json['estimatedMinutes'] as int? ?? 10,
       topics: List<String>.from(json['topics'] ?? []),
     );
   }

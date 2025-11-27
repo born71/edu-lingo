@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/animated_widgets.dart';
-
+ 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -13,13 +15,26 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToHome();
+    _checkAuthAndNavigate();
   }
 
-  _navigateToHome() async {
+  _checkAuthAndNavigate() async {
+    // Wait for splash animation
     await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
+    
+    if (!mounted) return;
+    
+    // Check authentication state
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await authProvider.checkAuthState();
+    
+    if (!mounted) return;
+    
+    // Navigate based on auth state
+    if (authProvider.isAuthenticated) {
       Navigator.pushReplacementNamed(context, '/');
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
@@ -39,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Welcome to Edulingo',
+              'Edulingo',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 32,

@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'providers/progress_provider.dart';
+import 'providers/auth_provider.dart';
 import 'widgets/main_layout.dart';
 import 'screens/lesson_screen.dart';
 import 'screens/stat_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/api_test_screen.dart';
 import 'services/storage_service.dart';
 import 'utils/page_transitions.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   
   // Initialize storage service
   await StorageService.init();
@@ -24,8 +35,11 @@ class LanguageLearningApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => ProgressProvider()..initialize(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ProgressProvider()..initialize()),
+      ],
       child: MaterialApp(
         title: 'Edu-Lingo',
         debugShowCheckedModeBanner: false,
@@ -77,6 +91,12 @@ class LanguageLearningApp extends StatelessWidget {
               return FadeSlideRoute(page: const SettingsScreen());
             case '/profile':
               return SlideRightRoute(page: const ProfileScreen());
+            case '/login':
+              return FadeSlideRoute(page: const LoginScreen());
+            case '/register':
+              return SlideRightRoute(page: const RegisterScreen());
+            case '/api-test':
+              return FadeSlideRoute(page: const ApiTestScreen());
             default:
               return FadeSlideRoute(page: const MainLayout());
           }

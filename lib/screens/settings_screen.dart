@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/progress_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/base_scaffold.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -89,10 +90,70 @@ class SettingsScreenContent extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Session',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 15),
+                      ListTile(
+                        leading: Icon(Icons.logout, color: Colors.red.shade400),
+                        title: const Text('Sign Out'),
+                        subtitle: const Text('Sign out of your account'),
+                        onTap: () => _showSignOutConfirmation(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           );
         },
       );
+  }
+
+  void _showSignOutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Sign Out?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to sign out?',
+          style: TextStyle(color: Colors.grey.shade400),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey.shade400),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              await Provider.of<AuthProvider>(context, listen: false).signOut();
+              if (context.mounted) {
+                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showLanguageSelection(BuildContext context) {

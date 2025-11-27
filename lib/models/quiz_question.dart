@@ -53,23 +53,31 @@ class QuizQuestion {
   }
 
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
+    // Handle type - may be uppercase with underscore (API) or camelCase (local)
+    // API: "MULTIPLE_CHOICE" -> Flutter: "multipleChoice"
+    String typeStr = (json['type'] as String?)?.toLowerCase() ?? 'multiplechoice';
+    typeStr = typeStr.replaceAll('_', ''); // Remove underscores: multiple_choice -> multiplechoice
+    
+    // Handle difficulty - may be uppercase (API) or lowercase (local)
+    final difficultyStr = (json['difficulty'] as String?)?.toLowerCase() ?? 'beginner';
+    
     return QuizQuestion(
-      id: json['id'],
-      question: json['question'],
-      correctAnswer: json['correctAnswer'],
-      options: List<String>.from(json['options']),
+      id: json['id']?.toString() ?? '',
+      question: json['question']?.toString() ?? '',
+      correctAnswer: json['correctAnswer']?.toString() ?? '',
+      options: List<String>.from(json['options'] ?? []),
       type: QuestionType.values.firstWhere(
-        (e) => e.name == json['type'],
+        (e) => e.name.toLowerCase() == typeStr,
         orElse: () => QuestionType.multipleChoice,
       ),
       difficulty: Difficulty.values.firstWhere(
-        (e) => e.name == json['difficulty'],
+        (e) => e.name.toLowerCase() == difficultyStr,
         orElse: () => Difficulty.beginner,
       ),
-      language: json['language'] ?? 'Mixed',
-      audioUrl: json['audioUrl'],
-      imageUrl: json['imageUrl'],
-      explanation: json['explanation'],
+      language: json['language']?.toString() ?? 'Mixed',
+      audioUrl: json['audioUrl']?.toString(),
+      imageUrl: json['imageUrl']?.toString(),
+      explanation: json['explanation']?.toString(),
     );
   }
 
