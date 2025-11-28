@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'providers/progress_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/goal_provider.dart';
 import 'widgets/main_layout.dart';
 import 'screens/lesson_screen.dart';
 import 'screens/stat_screen.dart';
@@ -39,6 +40,7 @@ class LanguageLearningApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ProgressProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => GoalProvider()),
       ],
       child: MaterialApp(
         title: 'Edu-Lingo',

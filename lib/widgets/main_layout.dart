@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/progress_provider.dart';
 import '../models/lesson.dart';
 import '../screens/home_screen.dart';
+import '../screens/goals_screen.dart';
 import '../screens/stat_screen.dart';
 import '../screens/settings_screen.dart';
 
@@ -23,12 +24,14 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
   
   final List<Widget> _screens = [
     const HomeScreenContent(),
+    const GoalsScreenContent(),
     const StatsScreenContent(),
     const SettingsScreenContent(),
   ];
 
   final List<String> _titles = [
     'Edulingo',
+    'My Goals',
     'Your Learning Stats',
     'Settings',
   ];
@@ -133,43 +136,46 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
               index: 0,
             ),
             _buildNavItem(
-              icon: Icons.play_circle_fill,
-              label: 'Lessons',
-              index: -1, // Special case for lessons modal
+              icon: Icons.flag,
+              label: 'Goals',
+              index: 1,
             ),
-            // Logo in center
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.deepPurple.shade400, Colors.purpleAccent.shade100],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.deepPurple.withOpacity(0.4),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            // Logo in center - tap for lessons
+            GestureDetector(
+              onTap: _showLessonSelection,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.deepPurple.shade400, Colors.purpleAccent.shade100],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-              ),
-              child: const Icon(
-                Icons.school,
-                color: Colors.white,
-                size: 32,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.school,
+                  color: Colors.white,
+                  size: 32,
+                ),
               ),
             ),
             _buildNavItem(
               icon: Icons.analytics,
               label: 'Stats',
-              index: 1,
+              index: 2,
             ),
             _buildNavItem(
               icon: Icons.settings,
               label: 'Settings',
-              index: 2,
+              index: 3,
             ),
           ],
         ),
@@ -185,14 +191,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
     final isActive = _currentIndex == index;
     
     return GestureDetector(
-      onTap: () {
-        if (index == -1) {
-          // Show lessons modal
-          _showLessonSelection();
-        } else {
-          _switchTab(index);
-        }
-      },
+      onTap: () => _switchTab(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
