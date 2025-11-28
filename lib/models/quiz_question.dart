@@ -65,7 +65,7 @@ class QuizQuestion {
       id: json['id']?.toString() ?? '',
       question: json['question']?.toString() ?? '',
       correctAnswer: json['correctAnswer']?.toString() ?? '',
-      options: List<String>.from(json['options'] ?? []),
+      options: _parseStringList(json['options']),
       type: QuestionType.values.firstWhere(
         (e) => e.name.toLowerCase() == typeStr,
         orElse: () => QuestionType.multipleChoice,
@@ -79,6 +79,22 @@ class QuizQuestion {
       imageUrl: json['imageUrl']?.toString(),
       explanation: json['explanation']?.toString(),
     );
+  }
+
+  // Helper to parse options which may be a List<String>, a single String, or null
+  static List<String> _parseStringList(dynamic value) {
+    if (value == null) return [];
+    if (value is List) {
+      return value.map((e) => e.toString()).toList();
+    }
+    if (value is String) {
+      // If it's a comma-separated string, split it
+      if (value.contains(',')) {
+        return value.split(',').map((e) => e.trim()).toList();
+      }
+      return [value];
+    }
+    return [];
   }
 
   QuizQuestion copyWith({

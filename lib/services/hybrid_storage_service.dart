@@ -49,82 +49,74 @@ class HybridStorageService {
     String? difficulty,
     bool forceRefresh = false,
   }) async {
-    print('\n🚀 [HYBRID] Starting lesson fetch with fallback strategy...');
-    print('🔍 [HYBRID] Parameters: language=$language, difficulty=$difficulty, forceRefresh=$forceRefresh');
+    print('\n🚀 [HYBRID] Starting lesson fetch...');
+    print('🔍 [HYBRID] Params: language=$language, difficulty=$difficulty, forceRefresh=$forceRefresh');
     
     try {
       // Check if we should try Lessons API first
-      print('🌐 [HYBRID] Step 1: Checking if Lessons microservice is available...');
+      print('🌐 [HYBRID] Checking if API is reachable...');
+      final isReachable = await LessonsApiService.isServiceReachable();
+      print('📡 [HYBRID] API reachable: $isReachable');
       
-      if (await LessonsApiService.isServiceReachable() || forceRefresh) {
-        print('✅ [HYBRID] 🚀 Lessons microservice is ONLINE! Fetching from API...');
+      if (isReachable || forceRefresh) {
+        print('✅ [HYBRID] Fetching from API...');
         
         final apiLessons = await LessonsApiService.fetchLessons(
           language: language,
           difficulty: difficulty,
         );
         
+        print('📦 [HYBRID] Got ${apiLessons.length} lessons from API');
+        
         // Cache the lessons locally
-        print('💾 [HYBRID] Caching ${apiLessons.length} lessons locally for offline use');
         await _cacheLessons(apiLessons);
         await _updateLastSync();
         
-        print('✅ [HYBRID] 🎆 SUCCESS: Returned ${apiLessons.length} lessons from MICROSERVICE API');
+        print('💾 [HYBRID] Cached ${apiLessons.length} lessons locally');
         return apiLessons;
       } else {
-        print('⚠️ [HYBRID] Lessons microservice is OFFLINE, proceeding with fallback...');
+        print('⚠️ [HYBRID] API not reachable, using fallback...');
       }
     } catch (e) {
-      print('🚨 [HYBRID] API fetch failed: $e');
-      print('🔄 [HYBRID] Falling back to cached/local lessons...');
+      print('❌ [HYBRID] API error: $e');
+      // Fall through to cached/local lessons
     }
     
     // Fallback to cached lessons
-    print('💾 [HYBRID] Step 2: Attempting to load cached lessons...');
+    print('💾 [HYBRID] Trying cached lessons...');
     final cachedLessons = await _loadCachedLessons();
     if (cachedLessons.isNotEmpty) {
-      print('✅ [HYBRID] 💾 Found ${cachedLessons.length} cached lessons');
-      print('✅ [HYBRID] 🎆 SUCCESS: Returned ${cachedLessons.length} lessons from LOCAL CACHE');
+      print('✅ [HYBRID] Found ${cachedLessons.length} cached lessons');
       return cachedLessons;
-    } else {
-      print('⚠️ [HYBRID] No cached lessons found');
     }
     
     // Final fallback to default lessons
-    print('📜 [HYBRID] Step 3: Using default lessons as final fallback...');
+    print('📜 [HYBRID] Using default lessons...');
     final defaultLessons = _getDefaultLessons();
-    print('✅ [HYBRID] 🎆 SUCCESS: Returned ${defaultLessons.length} lessons from DEFAULT DATA');
+    print('✅ [HYBRID] Loaded ${defaultLessons.length} default lessons');
     return defaultLessons;
   }
   
   static Future<void> _cacheLessons(List<Lesson> lessons) async {
     try {
-      print('💾 [CACHE] Saving ${lessons.length} lessons to local cache...');
       final prefs = await _preferences;
       final jsonString = jsonEncode(lessons.map((l) => l.toJson()).toList());
       await prefs.setString(_lessonsKey, jsonString);
-      print('✅ [CACHE] Successfully cached ${lessons.length} lessons locally');
     } catch (e) {
-      print('❌ [CACHE] Error caching lessons: $e');
     }
   }
   
   static Future<List<Lesson>> _loadCachedLessons() async {
     try {
-      print('🔍 [CACHE] Checking for cached lessons...');
       final prefs = await _preferences;
       final jsonString = prefs.getString(_lessonsKey);
       
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
-        final lessons = jsonList.map((json) => Lesson.fromJson(json)).toList();
-        print('✅ [CACHE] Found ${lessons.length} cached lessons');
-        return lessons;
-      } else {
-        print('⚠️ [CACHE] No cached lessons found');
+        return jsonList.map((json) => Lesson.fromJson(json)).toList();
       }
     } catch (e) {
-      print('❌ [CACHE] Error loading cached lessons: $e');
+      // Silent fail for cache loading
     }
     
     return [];
@@ -149,7 +141,6 @@ class HybridStorageService {
       }
       return true; // Local save successful
     } catch (e) {
-      print('Error saving user progress: $e');
       return false;
     }
   }
@@ -157,27 +148,12 @@ class HybridStorageService {
   /// Load progress with server sync
   static Future<UserProgress?> loadUserProgress() async {
     try {
-      final userId = await getUserId();
-      
       // TODO: Fetch from User Progress microservice when ready
-      // For now, just use local cache
-      if (userId != null) {
-        print('User Progress service not yet implemented, using local cache');
-      }
-      
       // Fallback to local cache
       return await _loadProgressLocally();
-      
     } catch (e) {
-      print('Error loading user progress: $e');
       return null;
     }
-  }
-  
-  static Future<void> _saveProgressLocally(UserProgress progress) async {
-    final prefs = await _preferences;
-    final jsonString = jsonEncode(progress.toJson());
-    await prefs.setString(_userProgressKey, jsonString);
   }
   
   static Future<UserProgress?> _loadProgressLocally() async {
@@ -190,7 +166,6 @@ class HybridStorageService {
         return UserProgress.fromJson(json);
       }
     } catch (e) {
-      print('Error loading local progress: $e');
     }
     
     return null;
@@ -212,36 +187,13 @@ class HybridStorageService {
       
       await prefs.setString(_offlineQueueKey, jsonEncode(queue));
     } catch (e) {
-      print('Error queuing offline action: $e');
-    }
-  }
-  
-  static Future<void> _clearOfflineQueue() async {
-    try {
-      final prefs = await _preferences;
-      await prefs.remove(_offlineQueueKey);
-    } catch (e) {
-      print('Error clearing offline queue: $e');
+      // Silent fail for offline queue
     }
   }
   
   /// Process queued offline actions when connection is restored
   static Future<void> syncOfflineQueue() async {
-    try {
-      // TODO: Implement when microservices are ready
-      print('Offline sync queue processing - waiting for microservices implementation');
-      
-      // For now, just log what would be synced
-      final prefs = await _preferences;
-      final queueJson = prefs.getString(_offlineQueueKey);
-      if (queueJson != null) {
-        final List<dynamic> queue = jsonDecode(queueJson);
-        print('${queue.length} items queued for sync when services are ready');
-      }
-      
-    } catch (e) {
-      print('Error checking offline queue: $e');
-    }
+    // TODO: Implement when microservices are ready
   }
 
   // ===== SYNC MANAGEMENT =====
@@ -265,14 +217,12 @@ class HybridStorageService {
   static Future<bool> forceSyncAll() async {
     try {
       // TODO: Implement when User Progress microservice is ready
-      print('Force sync - waiting for User Progress microservice implementation');
       
       // For now, just sync offline queue (log only)
       await syncOfflineQueue();
       
       return true; // Return success for local operations
     } catch (e) {
-      print('Error in force sync: $e');
       return false;
     }
   }
@@ -303,7 +253,6 @@ class HybridStorageService {
       }
       return true; // Always return success for local storage
     } catch (e) {
-      print('Error recording answer: $e');
       return false;
     }
   }
@@ -312,9 +261,7 @@ class HybridStorageService {
   
   static List<Lesson> _getDefaultLessons() {
     // Return your current static lessons as fallback
-    print('📜 [DEFAULT] Loading built-in default lessons...');
     final lessons = LessonData.getDefaultLessons();
-    print('✅ [DEFAULT] Loaded ${lessons.length} default lessons: ${lessons.map((l) => l.title).join(', ')}');
     return lessons;
   }
 
@@ -326,7 +273,6 @@ class HybridStorageService {
       await prefs.clear();
       return true;
     } catch (e) {
-      print('Error clearing data: $e');
       return false;
     }
   }

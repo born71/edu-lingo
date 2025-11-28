@@ -63,8 +63,24 @@ class Lesson {
       ),
       iconUrl: json['iconUrl']?.toString(),
       estimatedMinutes: json['estimatedMinutes'] as int? ?? 10,
-      topics: List<String>.from(json['topics'] ?? []),
+      topics: _parseStringList(json['topics']),
     );
+  }
+
+  // Helper to parse topics which may be a List<String>, a single String, or null
+  static List<String> _parseStringList(dynamic value) {
+    if (value == null) return [];
+    if (value is List) {
+      return value.map((e) => e.toString()).toList();
+    }
+    if (value is String) {
+      // If it's a comma-separated string, split it
+      if (value.contains(',')) {
+        return value.split(',').map((e) => e.trim()).toList();
+      }
+      return [value];
+    }
+    return [];
   }
 
   Lesson copyWith({

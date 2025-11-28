@@ -156,9 +156,22 @@ class HomeScreenContent extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    DataSourceIndicator(
-                      source: progressProvider.dataSource,
-                      isLoading: progressProvider.isLoading,
+                    Row(
+                      children: [
+                        DataSourceIndicator(
+                          source: progressProvider.dataSource,
+                          isLoading: progressProvider.isLoading,
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => progressProvider.refreshLessonsFromApi(),
+                          icon: Icon(
+                            Icons.refresh,
+                            color: Colors.deepPurple.shade300,
+                          ),
+                          tooltip: 'Refresh from API',
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -11,7 +11,6 @@ class LessonsApiService {
   static Future<bool> isServiceReachable() async {
     try {
       final url = AppConfig.buildLessonsEndpoint('lessons');
-      print('🔍 [API] Checking lessons service lessons: $url');
       
       final response = await http.get(
         Uri.parse(url),
@@ -19,11 +18,9 @@ class LessonsApiService {
       ).timeout(_timeout);
       
       final isReachable = response.statusCode == 200;
-      print('✅ [API] Lessons service ${isReachable ? 'ONLINE' : 'OFFLINE'} (Status: ${response.statusCode})');
       
       return isReachable;
     } catch (e) {
-      print('❌ [API] Lessons service health check failed: $e');
       return false;
     }
   }
@@ -35,21 +32,16 @@ class LessonsApiService {
   }) async {
     try {
       String url;
-      String filterInfo = '';
       
       if (language != null) {
         url = AppConfig.buildLessonsEndpoint('lessonsByLanguage', {'language': language});
-        filterInfo = ' (filtered by language: $language)';
       } else if (difficulty != null) {
         url = AppConfig.buildLessonsEndpoint('lessonsByDifficulty', {'difficulty': difficulty});
-        filterInfo = ' (filtered by difficulty: $difficulty)';
       } else {
         url = AppConfig.buildLessonsEndpoint('lessons');
-        filterInfo = ' (all lessons)';
       }
 
-      print('🌐 [API] Fetching lessons from microservice$filterInfo');
-      print('📡 [API] Request URL: $url');
+      print('🌐 [API] Fetching lessons from URL: $url');
       
       final stopwatch = Stopwatch()..start();
       final response = await http.get(
@@ -61,55 +53,55 @@ class LessonsApiService {
       ).timeout(_timeout);
       stopwatch.stop();
 
+      print('📡 [API] Response status: ${response.statusCode} (${stopwatch.elapsedMilliseconds}ms)');
+
       if (response.statusCode == 200) {
         // Check if response body is empty or null
         if (response.body.isEmpty) {
-          print('⚠️ [API] Response body is empty, returning empty lessons list');
+          print('⚠️ [API] Response body is empty');
           return <Lesson>[];
         }
         
-        print('📥 [API] Raw response (first 500 chars): ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}');
+        print('📄 [API] Response body (first 500 chars): ${response.body.length > 500 ? response.body.substring(0, 500) : response.body}');
         
         // Parse JSON safely
         final dynamic jsonData = jsonDecode(response.body);
         
         // Check if the parsed data is actually a list
         if (jsonData == null) {
-          print('⚠️ [API] Response body parsed to null, returning empty lessons list');
+          print('⚠️ [API] Parsed JSON is null');
           return <Lesson>[];
         }
         
         if (jsonData is! List) {
-          print('⚠️ [API] Response is not a JSON array, got: ${jsonData.runtimeType}');
-          print('📄 [API] Response content: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
+          print('❌ [API] Expected List but got: ${jsonData.runtimeType}');
           throw Exception('Expected JSON array but got ${jsonData.runtimeType}');
         }
         
         final List<dynamic> jsonList = jsonData;
-        print('📊 [API] Parsing ${jsonList.length} lessons from JSON...');
+        print('📊 [API] Parsing ${jsonList.length} lessons...');
         
         final List<Lesson> lessons = [];
         for (int i = 0; i < jsonList.length; i++) {
           try {
+            print('🔍 [API] Parsing lesson $i: ${jsonList[i]}');
             final lesson = Lesson.fromJson(jsonList[i]);
             lessons.add(lesson);
-            print('  ✅ Parsed lesson ${i + 1}: "${lesson.title}" with ${lesson.questions.length} questions');
+            print('✅ [API] Lesson $i parsed: ${lesson.title}');
           } catch (e) {
-            print('  ❌ Failed to parse lesson ${i + 1}: $e');
-            print('  📄 Raw JSON: ${jsonList[i]}');
+            print('❌ [API] Error parsing lesson $i: $e');
+            print('📄 [API] Raw JSON for lesson $i: ${jsonList[i]}');
           }
         }
         
-        print('✅ [API] Successfully fetched ${lessons.length} lessons from API in ${stopwatch.elapsedMilliseconds}ms');
-        print('📋 [API] Lessons received: ${lessons.map((l) => "${l.title} (${l.questions.length} Q)").join(', ')}');
-        
+        print('✅ [API] Successfully parsed ${lessons.length}/${jsonList.length} lessons');
         return lessons;
       } else {
-        print('❌ [API] Failed to fetch lessons: ${response.statusCode} ${response.reasonPhrase}');
+        print('❌ [API] Request failed: ${response.statusCode} ${response.reasonPhrase}');
         throw Exception('Failed to fetch lessons: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
-      print('💥 [API] Error fetching lessons from microservice: $e');
+      print('💥 [API] Exception: $e');
       rethrow;
     }
   }
@@ -119,8 +111,6 @@ class LessonsApiService {
     try {
       final url = AppConfig.buildLessonsEndpoint('lessonById', {'id': lessonId});
 
-      print('🔍 [API] Fetching specific lesson: $lessonId');
-      print('📡 [API] Request URL: $url');
       
       final response = await http.get(
         Uri.parse(url),
@@ -133,17 +123,13 @@ class LessonsApiService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = jsonDecode(response.body);
         final lesson = Lesson.fromJson(json);
-        print('✅ [API] Successfully fetched lesson "${lesson.title}" from API');
         return lesson;
       } else if (response.statusCode == 404) {
-        print('❌ [API] Lesson not found: $lessonId');
         return null; // Lesson not found
       } else {
-        print('❌ [API] Failed to fetch lesson: ${response.statusCode} ${response.reasonPhrase}');
         throw Exception('Failed to fetch lesson: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
-      print('💥 [API] Error fetching lesson by ID: $e');
       rethrow;
     }
   }
@@ -168,7 +154,6 @@ class LessonsApiService {
         throw Exception('Failed to search lessons: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
-      print('Error searching lessons: $e');
       rethrow;
     }
   }
@@ -194,7 +179,6 @@ class LessonsApiService {
         throw Exception('Failed to create lesson: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
-      print('Error creating lesson: $e');
       rethrow;
     }
   }
@@ -220,7 +204,6 @@ class LessonsApiService {
         throw Exception('Failed to update lesson: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
-      print('Error updating lesson: $e');
       rethrow;
     }
   }
@@ -240,7 +223,6 @@ class LessonsApiService {
 
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('Error deleting lesson: $e');
       return false;
     }
   }
@@ -270,16 +252,14 @@ class LessonsApiService {
           ).timeout(_timeout);
 
           if (questionsResponse.statusCode == 200) {
-            final List<dynamic> questionsJson = jsonDecode(questionsResponse.body);
-            // You'll need to update this based on your QuizQuestion model
-            // For now, keeping the existing lesson
+            // TODO: Parse questions and add to lesson when QuizQuestion model is ready
+            // final List<dynamic> questionsJson = jsonDecode(questionsResponse.body);
           }
         }
       }
       
       return lessons;
     } catch (e) {
-      print('Error fetching lessons with questions: $e');
       rethrow;
     }
   }

@@ -30,7 +30,6 @@ class StorageService {
       final jsonString = jsonEncode(progress.toJson());
       return await prefs.setString(_userProgressKey, jsonString);
     } catch (e) {
-      print('Error saving user progress: $e');
       return false;
     }
   }
@@ -48,7 +47,6 @@ class StorageService {
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
       return UserProgress.fromJson(json);
     } catch (e) {
-      print('Error loading user progress: $e');
       return null;
     }
   }
@@ -60,7 +58,6 @@ class StorageService {
       final jsonString = jsonEncode(lessons.map((l) => l.toJson()).toList());
       return await prefs.setString(_lessonsKey, jsonString);
     } catch (e) {
-      print('Error saving lessons: $e');
       return false;
     }
   }
@@ -78,7 +75,6 @@ class StorageService {
       final jsonList = jsonDecode(jsonString) as List;
       return jsonList.map((json) => Lesson.fromJson(json)).toList();
     } catch (e) {
-      print('Error loading lessons: $e');
       return [];
     }
   }
@@ -89,7 +85,6 @@ class StorageService {
       final prefs = await _preferences;
       return await prefs.setStringList(_completedLessonsKey, completedLessonIds);
     } catch (e) {
-      print('Error saving completed lessons: $e');
       return false;
     }
   }
@@ -100,7 +95,6 @@ class StorageService {
       final prefs = await _preferences;
       return prefs.getStringList(_completedLessonsKey) ?? [];
     } catch (e) {
-      print('Error loading completed lessons: $e');
       return [];
     }
   }
@@ -114,7 +108,6 @@ class StorageService {
       await prefs.remove(_completedLessonsKey);
       return true;
     } catch (e) {
-      print('Error clearing data: $e');
       return false;
     }
   }
@@ -165,7 +158,6 @@ class StorageService {
         return await prefs.setString(key, jsonEncode(value));
       }
     } catch (e) {
-      print('Error saving setting $key: $e');
       return false;
     }
   }
@@ -189,7 +181,6 @@ class StorageService {
       
       return null;
     } catch (e) {
-      print('Error loading setting $key: $e');
       return null;
     }
   }

@@ -68,21 +68,21 @@ class ProgressProvider extends ChangeNotifier {
 
   // Load lessons from API service directly, then fallback to local data
   Future<void> _loadOrCreateLessons() async {
-    print('\n🚀 [PROVIDER] Starting lesson loading process...');
+    print('🚀 [PROVIDER] Starting to load lessons...');
     
     // First try: Direct API call
     try {
-      print('🌐 [PROVIDER] Attempting to fetch lessons from API service...');
+      print('🌐 [PROVIDER] Attempting to fetch from API...');
       final apiLessons = await LessonsApiService.fetchLessons();
       
       if (apiLessons.isNotEmpty) {
         _lessons = apiLessons;
         _dataSource = 'api';
-        print('✅ [PROVIDER] Successfully loaded ${_lessons.length} lessons from API');
-        print('📋 [PROVIDER] API Lessons: ${_lessons.map((l) => l.title).join(', ')}');
+        print('✅ [PROVIDER] Loaded ${apiLessons.length} lessons from API');
+        print('📋 [PROVIDER] Lessons: ${apiLessons.map((l) => l.title).join(', ')}');
         return;
       } else {
-        print('⚠️ [PROVIDER] API returned empty lessons list');
+        print('⚠️ [PROVIDER] API returned empty list');
       }
     } catch (e) {
       print('❌ [PROVIDER] API fetch failed: $e');
@@ -90,16 +90,38 @@ class ProgressProvider extends ChangeNotifier {
     
     // Second try: Local lesson data from lesson_data.dart
     try {
-      print('📄 [PROVIDER] Falling back to local lesson data...');
+      print('📄 [PROVIDER] Falling back to local data...');
       _lessons = LessonData.getDefaultLessons();
       _dataSource = 'local';
-      print('✅ [PROVIDER] Successfully loaded ${_lessons.length} lessons from lesson_data.dart');
-      print('📋 [PROVIDER] Local Lessons: ${_lessons.map((l) => l.title).join(', ')}');
+      print('✅ [PROVIDER] Loaded ${_lessons.length} lessons from local data');
     } catch (e) {
-      print('🚨 [PROVIDER] Critical error - could not load any lessons: $e');
+      print('💥 [PROVIDER] Critical error: $e');
       _lessons = [];
       _dataSource = 'error';
       throw Exception('Failed to load lessons from both API and local data: $e');
+    }
+  }
+
+  // Refresh lessons from API (can be called manually)
+  Future<void> refreshLessonsFromApi() async {
+    _setLoading(true);
+    try {
+      print('🔄 [PROVIDER] Refreshing lessons from API...');
+      final apiLessons = await LessonsApiService.fetchLessons();
+      
+      if (apiLessons.isNotEmpty) {
+        _lessons = apiLessons;
+        _dataSource = 'api';
+        print('✅ [PROVIDER] Refreshed ${apiLessons.length} lessons from API');
+        notifyListeners();
+      } else {
+        print('⚠️ [PROVIDER] API returned empty list, keeping current lessons');
+      }
+    } catch (e) {
+      print('❌ [PROVIDER] Refresh failed: $e');
+      _setError('Failed to refresh lessons: $e');
+    } finally {
+      _setLoading(false);
     }
   }
 

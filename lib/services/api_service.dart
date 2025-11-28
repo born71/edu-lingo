@@ -101,7 +101,6 @@ class ApiService {
       
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      print('Error syncing progress: $e');
       return false;
     }
   }
@@ -151,7 +150,6 @@ class ApiService {
       
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      print('Error recording answer: $e');
       return false;
     }
   }
@@ -287,7 +285,6 @@ class ApiService {
       
       return response.statusCode == 200;
     } catch (e) {
-      print('Error in batch sync: $e');
       return false;
     }
   }

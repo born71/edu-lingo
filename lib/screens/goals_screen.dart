@@ -74,7 +74,7 @@ class _GoalsScreenContentState extends State<GoalsScreenContent>
                       children: [
                         const Icon(Icons.today, size: 18),
                         const SizedBox(width: 6),
-                        Text('Daily (${goalProvider.dailyGoals.length})'),
+                        Text('Daily'),
                       ],
                     ),
                   ),
@@ -84,7 +84,7 @@ class _GoalsScreenContentState extends State<GoalsScreenContent>
                       children: [
                         const Icon(Icons.date_range, size: 18),
                         const SizedBox(width: 6),
-                        Text('Weekly (${goalProvider.weeklyGoals.length})'),
+                        Text('Weekly'),
                       ],
                     ),
                   ),
@@ -94,7 +94,7 @@ class _GoalsScreenContentState extends State<GoalsScreenContent>
                       children: [
                         const Icon(Icons.calendar_month, size: 18),
                         const SizedBox(width: 6),
-                        Text('Monthly (${goalProvider.monthlyGoals.length})'),
+                        Text('Monthly'),
                       ],
                     ),
                   ),

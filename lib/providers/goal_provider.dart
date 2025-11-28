@@ -45,7 +45,6 @@ class GoalProvider extends ChangeNotifier {
         await _saveGoals();
       }
     } catch (e) {
-      print('Error loading goals: $e');
       _goals = _getDefaultGoals();
     }
 
@@ -122,7 +121,6 @@ class GoalProvider extends ChangeNotifier {
       final goalsJson = jsonEncode(_goals.map((g) => g.toJson()).toList());
       await prefs.setString('user_goals', goalsJson);
     } catch (e) {
-      print('Error saving goals: $e');
     }
   }
 
