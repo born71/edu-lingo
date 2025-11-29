@@ -143,33 +143,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
               label: 'Goals',
               index: 1,
             ),
-            // Logo in center - tap for lessons
-            GestureDetector(
-              onTap: _showLessonSelection,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.deepPurple.shade400, Colors.purpleAccent.shade100],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.deepPurple.withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.school,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-            ),
+            
             _buildNavItem(
               icon: Icons.leaderboard,
               label: 'Rank',
@@ -201,8 +175,17 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
     return GestureDetector(
       onTap: () => _switchTab(index),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isActive ? Colors.deepPurple.shade300 : Colors.transparent,
+            width: isActive ? 2.0 : 0.0,
+          ),
+          color: isActive ? Colors.deepPurple.withOpacity(0.15) : Colors.transparent,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
