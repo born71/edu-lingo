@@ -4,6 +4,7 @@ import '../providers/progress_provider.dart';
 import '../models/lesson.dart';
 import '../screens/home_screen.dart';
 import '../screens/goals_screen.dart';
+import '../screens/leaderboard_screen.dart';
 import '../screens/stat_screen.dart';
 import '../screens/settings_screen.dart';
 
@@ -25,6 +26,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
   final List<Widget> _screens = [
     const HomeScreenContent(),
     const GoalsScreenContent(),
+    const LeaderboardScreenContent(),
     const StatsScreenContent(),
     const SettingsScreenContent(),
   ];
@@ -32,6 +34,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
   final List<String> _titles = [
     'Edulingo',
     'My Goals',
+    'Leaderboard',
     'Your Learning Stats',
     'Settings',
   ];
@@ -168,14 +171,19 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
               ),
             ),
             _buildNavItem(
+              icon: Icons.leaderboard,
+              label: 'Rank',
+              index: 2,
+            ),
+            _buildNavItem(
               icon: Icons.analytics,
               label: 'Stats',
-              index: 2,
+              index: 3,
             ),
             _buildNavItem(
               icon: Icons.settings,
               label: 'Settings',
-              index: 3,
+              index: 4,
             ),
           ],
         ),
