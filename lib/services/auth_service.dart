@@ -22,6 +22,69 @@ class AuthService {
   // Check if user is logged in
   bool get isLoggedIn => _auth.currentUser != null;
 
+  // ===== ACCESS TOKEN METHODS =====
+
+  /// Get Firebase ID token (JWT)
+  /// This token can be used to authenticate with your backend API
+  Future<String?> getIdToken({bool forceRefresh = false}) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+      
+      return await user.getIdToken(forceRefresh);
+    } catch (e) {
+      print('Error getting ID token: $e');
+      return null;
+    }
+  }
+
+  /// Get ID token result with additional claims
+  Future<IdTokenResult?> getIdTokenResult({bool forceRefresh = false}) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+      
+      return await user.getIdTokenResult(forceRefresh);
+    } catch (e) {
+      print('Error getting ID token result: $e');
+      return null;
+    }
+  }
+
+  /// Check if the current token is expired and refresh if needed
+  Future<String?> getFreshIdToken() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+
+      final tokenResult = await user.getIdTokenResult(false);
+      final now = DateTime.now();
+      final expirationTime = tokenResult.expirationTime;
+
+      // If token expires within 5 minutes, refresh it
+      if (expirationTime != null && 
+          expirationTime.difference(now).inMinutes < 5) {
+        return await user.getIdToken(true); // Force refresh
+      }
+      
+      return tokenResult.token;
+    } catch (e) {
+      print('Error getting fresh ID token: $e');
+      return null;
+    }
+  }
+
+  /// Get authorization headers for API calls
+  Future<Map<String, String>?> getAuthHeaders() async {
+    final token = await getFreshIdToken();
+    if (token == null) return null;
+    
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
   // ===== EMAIL/PASSWORD AUTHENTICATION =====
 
   /// Sign up with email and password

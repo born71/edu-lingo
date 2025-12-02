@@ -108,7 +108,7 @@ class StatsScreenContent extends StatelessWidget {
         ],
       ),
 
-      // const SizedBox(height: 1),
+      const SizedBox(height: 20),
 
       SizedBox(
         width: double.infinity,

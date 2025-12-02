@@ -24,7 +24,7 @@ class BaseScaffold extends StatelessWidget {
         title: Text(title),
         backgroundColor: Colors.green.shade400,
         elevation: 0,
-        automaticallyImplyLeading: false, // Remove back button
+        automaticallyImplyLeading: false,
       ),
       body: body,
       bottomNavigationBar: Container(
